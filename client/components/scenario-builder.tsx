@@ -259,7 +259,16 @@ export function ScenarioBuilder() {
 
   // Generate projection data for simulation
   const generateProjectionData = () => {
-    const projectionData = []
+    const projectionData: Array<{
+      year: number
+      budget: number
+      EconomicGrowth?: number
+      JobCreation?: number
+      PovertyReduction?: number
+      PublicHealthIndex?: number
+      EducationOutcomes?: number
+      InfrastructureQuality?: number
+    }> = []
     const currentYear = new Date().getFullYear()
 
     // Calculate base growth rate based on economic growth metric
@@ -289,7 +298,7 @@ export function ScenarioBuilder() {
       }))
 
       // Calculate metrics for this year
-      const yearMetrics = {}
+      const yearMetrics: Record<string, number> = {}
       impactMetrics.forEach((metric) => {
         const growthFactor = 1 + adjustedGrowthRate * (i + 1) * 0.5
         if (metric.name === "Economic Growth") {
@@ -520,7 +529,7 @@ export function ScenarioBuilder() {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" />
                         <YAxis label={{ value: "Budget (Billions ₹)", angle: -90, position: "insideLeft" }} />
-                        <Tooltip formatter={(value) => [`₹${value.toFixed(1)}B`, "Budget"]} />
+                        <Tooltip formatter={(value) => [typeof value === "number" ? `₹${value.toFixed(1)}B` : value, "Budget"]} />
                         <Bar dataKey="value" fill="#3b82f6" />
                       </BarChart>
                     </ResponsiveContainer>
@@ -658,13 +667,13 @@ export function ScenarioBuilder() {
                         <span className="text-sm text-muted-foreground">After {simulationYears} years:</span>
                         <div className="flex items-center gap-2">
                           <span className="font-bold">
-                            {typeof projectionData[projectionData.length - 1][metric.name.replace(/\s+/g, "")] ===
+                            {typeof projectionData[projectionData.length - 1][metric.name.replace(/\s+/g, "") as keyof typeof projectionData[0]] ===
                               "number" &&
-                            projectionData[projectionData.length - 1][metric.name.replace(/\s+/g, "")] > 1000
+                            (projectionData[projectionData.length - 1][metric.name.replace(/\s+/g, "") as keyof typeof projectionData[0]] ?? 0) > 1000
                               ? projectionData[projectionData.length - 1][
-                                  metric.name.replace(/\s+/g, "")
-                                ].toLocaleString()
-                              : projectionData[projectionData.length - 1][metric.name.replace(/\s+/g, "")]}
+                                  metric.name.replace(/\s+/g, "") as keyof typeof projectionData[0]
+                                ]?.toLocaleString()
+                              : projectionData[projectionData.length - 1][metric.name.replace(/\s+/g, "") as keyof typeof projectionData[0]]}
                             {metric.name === "Economic Growth" && "%"}
                           </span>
                           <ArrowUp className="h-4 w-4 text-green-500" />
@@ -692,17 +701,12 @@ export function ScenarioBuilder() {
                           style={{
                             width: `${
                               metric.name === "Economic Growth"
-                                ? (projectionData[projectionData.length - 1][metric.name.replace(/\s+/g, "")] / 5) * 100
+                                ? (projectionData[projectionData.length - 1][metric.name.replace(/\s+/g, "") as keyof typeof projectionData[0]] as number / 5) * 100
                                 : metric.name === "Job Creation"
-                                  ? (projectionData[projectionData.length - 1][metric.name.replace(/\s+/g, "")] /
-                                      20000) *
-                                    100
+                                  ? ((projectionData[projectionData.length - 1][metric.name.replace(/\s+/g, "") as keyof typeof projectionData[0]] ?? 0) / 20000) * 100
                                   : metric.name === "Poverty Reduction"
-                                    ? (projectionData[projectionData.length - 1][metric.name.replace(/\s+/g, "")] / 5) *
-                                      100
-                                    : (projectionData[projectionData.length - 1][metric.name.replace(/\s+/g, "")] /
-                                        100) *
-                                      100
+                                    ? ((projectionData[projectionData.length - 1] as Record<string, number>)[metric.name.replace(/\s+/g, "")] / 5) * 100
+                                    : ((projectionData[projectionData.length - 1][metric.name.replace(/\s+/g, "") as keyof typeof projectionData[0]] ?? 0) / 100) * 100
                             }%`,
                           }}
                         />
@@ -710,9 +714,7 @@ export function ScenarioBuilder() {
                       <p className="text-xs text-muted-foreground mt-2">
                         Projected growth: +
                         {(
-                          ((projectionData[projectionData.length - 1][metric.name.replace(/\s+/g, "")] - metric.value) /
-                            metric.value) *
-                          100
+                          (((projectionData[projectionData.length - 1] as Record<string, number>)[metric.name.replace(/\s+/g, "")] - metric.value) / metric.value) * 100
                         ).toFixed(1)}
                         %
                       </p>
